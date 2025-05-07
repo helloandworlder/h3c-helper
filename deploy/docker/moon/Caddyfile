@@ -1,4 +1,4 @@
-h3c-helper.synex.im {
+http://h3c-helper.synex.im {
     # 启用 HTTP/3 (可选)
     # protocols h1 h2 h3
 

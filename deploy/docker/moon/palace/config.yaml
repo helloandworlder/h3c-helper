@@ -107,9 +107,9 @@ oss:
     useSSL: false
     bucketName: 'moon' # 确保这个bucket在minio中存在
     location: 'us-east-1' # minio通常不需要指定location，但有些sdk可能需要
-    url: 'http://h3c-helper.synex.im/api' # 文件访问的基础URL，通过Caddy代理
+    url: 'https://h3c-helper.synex.im/api' # 文件访问的基础URL，通过Caddy代理 (Cloudflare提供HTTPS)
     downloadPre: '/file/download' # 保持或根据minio的实际情况调整
   local: # 保留local配置块，但更新url，以防某些地方仍在使用
     path: './data/moon_oss'
-    url: http://h3c-helper.synex.im/api # 更新为Caddy代理后的地址
+    url: https://h3c-helper.synex.im/api # 更新为Caddy代理后的地址 (Cloudflare提供HTTPS)
     downloadPre: '/file/download'
