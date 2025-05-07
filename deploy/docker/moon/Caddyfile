@@ -1,22 +1,22 @@
-http://h3c-helper.synex.im {
-    # 仅提供 HTTP 服务，监听 80 端口 (由 docker-compose 映射)
+:80 {
+    # Listen on port 80 for any hostname
+    # Assumes Cloudflare forwards requests to this server on port 80,
+    # and Cloudflare handles the public domain h3c-helper.synex.im and HTTPS.
 
-    # 压缩响应 (可选)
+    # Compress responses (optional)
     encode gzip zstd
 
-    # API 后端 (palace 服务)
-    # 确保 palace 服务在 docker 网络中可以通过 palace:8000 访问
+    # API backend (palace service)
     handle_path /api/* {
         reverse_proxy palace:8000
     }
 
-    # 前端应用
-    # 确保 web 服务在 docker 网络中可以通过 web:80 访问
+    # Frontend application (web service)
     handle {
         reverse_proxy web:80
     }
 
-    # 日志配置 (可选)
+    # Logging (optional)
     log {
         output stdout
         format console
