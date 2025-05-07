@@ -20,7 +20,7 @@ cache:
   driver: "redis"
   redis:
     network: "tcp"
-    addr: moon_redis:6379
+    addr: redis:6379
     db: 0
     password: "lQz8OMgje7UyoD"
     read_timeout: 0.2s

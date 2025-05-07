@@ -1,43 +1,24 @@
 http://h3c-helper.synex.im {
-    # 启用 HTTP/3 (可选)
-    # protocols h1 h2 h3
+    # 仅提供 HTTP 服务，监听 80 端口 (由 docker-compose 映射)
 
-    # 自动获取和续订 Let's Encrypt 证书
-    # TLS 将由 Cloudflare 处理，此处不配置
-    # tls your-email@example.com {
-    #     dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-    # }
-
-    # 压缩响应
+    # 压缩响应 (可选)
     encode gzip zstd
 
-    # 前端应用
-    handle / {
-        reverse_proxy moon_web:80
-    }
-
     # API 后端 (palace 服务)
+    # 确保 palace 服务在 docker 网络中可以通过 palace:8000 访问
     handle_path /api/* {
         reverse_proxy palace:8000
+    }
+
+    # 前端应用
+    # 确保 web 服务在 docker 网络中可以通过 web:80 访问
+    handle {
+        reverse_proxy web:80
     }
 
     # 日志配置 (可选)
     log {
         output stdout
         format console
-    }
-
-    # 安全头部 (可选)
-    header {
-        # Enable HSTS
-        Strict-Transport-Security "max-age=31536000;"
-        # Enable X-Content-Type-Options
-        X-Content-Type-Options "nosniff"
-        # Enable X-Frame-Options
-        X-Frame-Options "DENY"
-        # Enable X-XSS-Protection
-        X-XSS-Protection "1; mode=block"
-        # Remove Server header
-        -Server
     }
 }
