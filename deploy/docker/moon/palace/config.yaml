@@ -1,0 +1,115 @@
+env: dev
+dependHouYi: true
+dependRabbit: true
+server:
+  name: 'Palace'
+  metadata:
+    description: palace是moon监控系列的监控平台，用于管理告警、监控、配置、日志、数据源等
+    background: 寓意为月宫，表示moon系列的统一管理平台
+
+http:
+  addr: 0.0.0.0:8000
+  timeout: 50s
+
+grpc:
+  addr: 0.0.0.0:9000
+  timeout: 50s
+
+jwt:
+  sign_key: 'moon-sign_key'
+  issuer: 'moon-palace'
+  expire: 3600s
+
+  allow_list:
+    - /api.admin.authorization.Authorization/Login
+    - /api.admin.authorization.Authorization/Captcha
+    - /api.admin.authorization.Authorization/CreatePassword
+    - /api.Health/Check
+    - /api.Alert/Hook
+    - /api.admin.authorization.Authorization/VerifyEmail
+    - /api.admin.authorization.Authorization/SetEmailWithLogin
+    - /api.admin.authorization.Authorization/ListOauth
+    - /api.admin.authorization.Authorization/RegisterWithEmail
+
+cache:
+  driver: 'redis'
+  redis:
+    network: 'tcp'
+    addr: moon_redis:6379
+    db: 0
+    password: 'lQz8OMgje7UyoD'
+    read_timeout: 0.2s
+    write_timeout: 0.2s
+    dial_timeout: 0.2s
+
+database:
+  driver: 'mysql'
+  debug: false
+  dsn: 'root:FfVodQL2BLo02H@tcp(moon_mysql:3306)/moon?charset=utf8mb4&parseTime=True&loc=Local'
+
+bizDatabase:
+  driver: 'mysql'
+  debug: false
+  dsn: 'root:FfVodQL2BLo02H@tcp(moon_mysql:3306)/'
+
+alarmDatabase:
+  driver: 'mysql'
+  debug: false
+  dsn: 'root:FfVodQL2BLo02H@tcp(moon_mysql:3306)/'
+
+log:
+  type: 'slog'
+  level: 'debug'
+  slog:
+    json: true
+
+oauth2:
+  redirect_uri: 'https://h3c-helper.synex.im'
+  github:
+    client_id: 'Ov23liu9oDt2p5nFXIMw'
+    client_secret: 'bd5678a8bde12d99f115a413065d8e8706ca6374'
+    callback_uri: 'https://h3c-helper.synex.im/api/auth/github/callback'
+    authorize_uri: 'https://h3c-helper.synex.im/api/auth/github'
+    scopes:
+      - 'user'
+      - 'email'
+  # gitee:
+  #   client_id: ''
+  #   client_secret: ''
+  #   callback_uri: 'https://moon.aide-cloud.cn/api/auth/gitee/callback'
+  #   authorize_uri: 'https://moon.aide-cloud.cn/api/auth/gitee'
+  #   scopes:
+  #     - 'user_info'
+  #     - 'emails'
+
+email_config:
+  host: smtp.resend.com
+  port: 587
+  user: resend
+  pass: re_iayPKFGw_KGtmni2a1GYC7YzBFNZgYMCm
+  from: noreply@h3c-helper.synex.im # 请根据实际情况修改发件人邮箱
+
+oss:
+  type: 'minio' # 修改为 minio
+  limitSize:
+    yml:
+      max: 524228
+    yaml:
+      max: 524228
+  # local: # local 相关配置不再需要，或根据需要保留
+  #   path: './data/moon_oss'
+  #   url: https://moon.aide-cloud.cn/api # 这个url也需要更新
+  #   downloadPre: '/file/download'
+  minio: # 添加 minio 配置
+    endpoint: 'moon_minio:9000'
+    accessKeyID: 'minioadmin'
+    secretAccessKey: 'minioadmin'
+    useSSL: false
+    bucketName: 'moon' # 确保这个bucket在minio中存在
+    location: 'us-east-1' # minio通常不需要指定location，但有些sdk可能需要
+    url: 'http://h3c-helper.synex.im/api' # 文件访问的基础URL，通过Caddy代理
+    downloadPre: '/file/download' # 保持或根据minio的实际情况调整
+  local: # 保留local配置块，但更新url，以防某些地方仍在使用
+    path: './data/moon_oss'
+    url: http://h3c-helper.synex.im/api # 更新为Caddy代理后的地址
+    downloadPre: '/file/download'

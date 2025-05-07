@@ -1,0 +1,154 @@
+networks:
+  moon-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  mysql_data:
+  minio_data:
+  caddy_data:
+  caddy_config:
+
+services:
+  redis:
+    image: redis:latest
+    container_name: moon_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - moon-network
+    restart: always
+    environment:
+      - REDIS_PASSWORD=lQz8OMgje7UyoD # 从 palace/houyi config 中获取
+    command: redis-server --requirepass lQz8OMgje7UyoD
+
+  mysql:
+    image: mysql:latest
+    container_name: moon_mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql_init:/docker-entrypoint-initdb.d # 可选，用于初始化脚本
+    networks:
+      - moon-network
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=FfVodQL2BLo02H # 从 palace config 中获取
+      - MYSQL_DATABASE=moon # 从 palace config 中获取
+
+  minio:
+    image: minio/minio:latest
+    container_name: moon_minio
+    ports:
+      - "9003:9000" # API port
+      - "9004:9001" # Console port
+    volumes:
+      - minio_data:/data
+    networks:
+      - moon-network
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+
+  palace:
+    image: docker.mstp.online/aidemoonio/palace:latest
+    container_name: moon_palace
+    ports:
+      - "8000:8000" # HTTP
+      - "9000:9000" # GRPC
+    volumes:
+      - ./palace:/data/conf
+    networks:
+      - moon-network
+    restart: always
+    depends_on:
+      - redis
+      - mysql
+      - minio
+    environment:
+      - PALACE_CACHE_REDIS_ADDR=moon_redis:6379
+      - PALACE_CACHE_REDIS_PASSWORD=lQz8OMgje7UyoD
+      - PALACE_DATABASE_DSN=root:FfVodQL2BLo02H@tcp(moon_mysql:3306)/moon?charset=utf8mb4&parseTime=True&loc=Local
+      - PALACE_BIZDATABASE_DSN=root:FfVodQL2BLo02H@tcp(moon_mysql:3306)/
+      - PALACE_ALARMDATABASE_DSN=root:FfVodQL2BLo02H@tcp(moon_mysql:3306)/
+      - PALACE_OSS_TYPE=minio
+      - PALACE_OSS_MINIO_ENDPOINT=moon_minio:9000
+      - PALACE_OSS_MINIO_ACCESSKEYID=minioadmin
+      - PALACE_OSS_MINIO_SECRETACCESSKEY=minioadmin
+      - PALACE_OSS_MINIO_BUCKETNAME=moon # 假设bucket名称为moon
+      - PALACE_OSS_MINIO_USESSL=false
+      - PALACE_OSS_LOCAL_URL=https://h3c-helper.synex.im/api # 更新为Caddy代理后的地址
+      - PALACE_EMAILCONFIG_HOST=smtp.resend.com
+      - PALACE_EMAILCONFIG_PORT=587
+      - PALACE_EMAILCONFIG_USER=resend
+      - PALACE_EMAILCONFIG_PASS=re_iayPKFGw_KGtmni2a1GYC7YzBFNZgYMCm
+      # - PALACE_EMAILCONFIG_FROM=noreply@synex.im # 请替换为实际发件人邮箱
+
+  houyi:
+    image: docker.mstp.online/aidemoonio/houyi:latest
+    container_name: moon_houyi
+    ports:
+      - "8001:8001" # HTTP
+      - "9001:9001" # GRPC
+    volumes:
+      - ./houyi:/data/conf
+    networks:
+      - moon-network
+    restart: always
+    depends_on:
+      - redis
+      - palace
+    environment:
+      - HOUYI_CACHE_REDIS_ADDR=moon_redis:6379
+      - HOUYI_CACHE_REDIS_PASSWORD=lQz8OMgje7UyoD
+      - HOUYI_PALACE_SERVER_ENDPOINT=palace:9000 # palace服务在docker网络中的grpc地址
+
+  rabbit:
+    image: docker.mstp.online/aidemoonio/rabbit:latest
+    container_name: moon_rabbit
+    ports:
+      - "8002:8002" # HTTP
+      - "9002:9002" # GRPC
+    volumes:
+      - ./rabbit:/data/conf
+    networks:
+      - moon-network
+    restart: always
+    depends_on:
+      - palace
+    environment:
+      - RABBIT_PALACE_SERVER_ENDPOINT=palace:9000 # palace服务在docker网络中的grpc地址
+
+  web:
+    image: docker.mstp.online/aidemoonio/moon-frontend:latest
+    container_name: moon_web
+    ports:
+      - "5173:80" # HTTP
+    networks:
+      - moon-network
+    restart: always
+
+  caddy:
+    image: caddy:latest
+    container_name: moon_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # For HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # 挂载Caddyfile
+      - caddy_data:/data # Caddy的持久化数据，如证书
+      - caddy_config:/config # Caddy的配置
+    networks:
+      - moon-network
+    restart: always
+    depends_on:
+      - web
+      - palace
+    environment:
+      - CADDY_ADMIN_DISABLE_METRICS=true # 可选，禁用metrics
