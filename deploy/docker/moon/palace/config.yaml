@@ -85,7 +85,7 @@ oauth2:
 email_config:
   host: smtp.resend.com
   port: 465
-  user: resend
+  user: noreply@h3c-helper.synex.im
   pass: re_iayPKFGw_KGtmni2a1GYC7YzBFNZgYMCm
   from: noreply@h3c-helper.synex.im # 请根据实际情况修改发件人邮箱
 
