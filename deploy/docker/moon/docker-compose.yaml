@@ -128,27 +128,27 @@ services:
     image: docker.mstp.online/aidemoonio/moon-frontend:latest
     container_name: moon_web
     ports:
-      - "5173:80" # HTTP
+      - "80:80" # HTTP, 直接暴露前端到宿主机80端口
     networks:
       - moon-network
     restart: always
 
-  caddy:
-    image: caddy:latest
-    container_name: moon_caddy
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp" # For HTTP/3
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile # 挂载Caddyfile
-      - caddy_data:/data # Caddy的持久化数据，如证书
-      - caddy_config:/config # Caddy的配置
-    networks:
-      - moon-network
-    restart: always
-    depends_on:
-      - web
-      - palace
-    environment:
-      - CADDY_ADMIN_DISABLE_METRICS=true # 可选，禁用metrics
+#  caddy:
+#    image: caddy:latest
+#    container_name: moon_caddy
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#      - "443:443/udp" # For HTTP/3
+#    volumes:
+#      - ./Caddyfile:/etc/caddy/Caddyfile # 挂载Caddyfile
+#      - caddy_data:/data # Caddy的持久化数据，如证书
+#      - caddy_config:/config # Caddy的配置
+#    networks:
+#      - moon-network
+#    restart: always
+#    depends_on:
+#      - web
+#      - palace
+#    environment:
+#      - CADDY_ADMIN_DISABLE_METRICS=true # 可选，禁用metrics
